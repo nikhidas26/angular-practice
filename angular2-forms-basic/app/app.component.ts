@@ -1,20 +1,16 @@
 import { Component } from '@angular/core';
 
+
 @Component({
   selector: 'my-app',
-  template: `<h1>My First Angular App</h1>
-
-            <zippy title="This is the title 1">
-              Here is the content  for 1          
-            </zippy>
-
-            <zippy title="This is the title 2">
-              Here is the content  for 2        
-            </zippy>
+  template: `
+            <div class="container">
+              <h1>Forms assignment</h1>
+              <subscription-form></subscription-form>
+            </div>
             `
 })
 export class AppComponent {
 
-  titles = ["This is title 1", "This is title 2"];
 
 }
