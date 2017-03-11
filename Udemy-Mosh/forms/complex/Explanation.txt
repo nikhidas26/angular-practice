@@ -1,0 +1,5 @@
+You build a component that references a template html
+
+We explicitly create a FormGroup in the component 
+
+in the template we tell angular about it using formGroup directive
