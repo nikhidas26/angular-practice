@@ -1,0 +1,78 @@
+<form #subscriptionForm="ngForm" (ngSubmit)="onSubmit(subscriptionForm)">
+
+    <div class="form-group">
+        <label for="firstName">Name</label>
+        <input type="text"
+                id="firstName" 
+                class="form-control"
+                ngModel
+                name="firstName"
+                #firstName="ngModel"
+                required
+                minlength="3">
+
+
+        <div *ngIf="firstName.touched && firstName.errors">
+            <div class="alert alert-danger"
+                *ngIf="firstName.errors.required">
+                Name is required
+            </div>
+            <div class="alert alert-danger"
+                *ngIf="firstName.errors.minlength">
+                Name should be minimum 3 characters
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email"
+                id="email" 
+                class="form-control"
+                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$"
+                ngModel
+                name="email"
+                #email="ngModel"
+                required
+                >
+        <div *ngIf="email.touched && email.errors">
+            <div class="alert alert-danger"
+                *ngIf="email.errors.required">
+                Email is required
+            </div>
+            <div class="alert alert-danger"
+                *ngIf="!email.errors.valid">
+                Please enter a valid email address
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="frequency">Frequency of emails</label>
+        <select type="text"
+                id="frequency" 
+                class="form-control"
+                required
+                name="frequency"
+                ngModel
+                #frequency="ngModel"
+                required
+                >
+            <option value=""></option>   
+            <option *ngFor="let frequency of frequencies" value="{{ frequency.id }}">
+                {{ frequency.label }}
+
+            </option>
+            
+        </select>
+
+        <div class="alert alert-danger"
+            *ngIf="frequency.touched && !frequency.valid">
+            Frequency is required
+        </div>
+    </div>
+
+    <button class="btn btn-primary" type="submit" [disabled]="!subscriptionForm.valid">Submit</button>
+
+</form>
