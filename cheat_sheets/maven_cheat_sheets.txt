@@ -1,0 +1,50 @@
+
+mvn archetype:generate -DgroupId=com.nikhil.test -DartifactId=NikhilTest -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
+
+mvn install:install-file -Dfile=<Local-File_path_of_jar> -DgroupId=parent_package_of_jar -DartifactId=name_of_jar -Dversion=version_number -Dpackaging=jar
+
+mvn clean
+
+mvn clean install
+
+mvn clean install -DskipTests=true
+
+mvn spring-boot:run -Dspring.profiles.active=local
+
+# Set version through CLI. If you are in a parent pom, this will update all teh child poms versions
+mvn versions:set -DnewVersion=1.1.1
+
+
+Maven_Proxy_settings
+
+1) Settings.xml is the place where we have proxy settings.
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">">
+
+	  
+	
+
+  <proxies>
+    <proxy>
+      <id>blah</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>proxy_host</host>
+      <port>proxy_port</port>
+      <nonProxyHosts>non_proxy_hosts</nonProxyHosts>
+    </proxy>
+  </proxies>
+
+  
+  <profiles>
+
+	<profile>
+		...
+		...
+	</profile>
+	
+  </profiles>
+  
+  </settings>
