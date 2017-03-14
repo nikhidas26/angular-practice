@@ -1,4 +1,4 @@
-<form [formGroup]="form" (ngSubmit)="signup()">
+<form [formGroup]="form" (submit)="signup($event)">
     <div class="form-group">
         <label for="username">Username:</label>
         <input type="text" 
@@ -16,6 +16,11 @@
             <div *ngIf="form.controls.username.errors.cannotContainSpace" class="alert alert-danger">
                 Username cannot contain spaces
             </div>
+
+            <div *ngIf="form.controls.username.errors.invalidLogin"
+                    class="alert alert-danger">
+                Invalid login
+            </div>
         </div>
 
         
@@ -28,9 +33,12 @@
                 id="password"
                 name="password"
                 formControlName="password"/>
-       <div *ngIf="!form.controls.password.valid" class="alert alert-danger">
+        <div *ngIf="form.controls.username.touched && form.controls.username.errors">
+            <div *ngIf="!form.controls.password.valid" class="alert alert-danger">
             password is required
+            </div>
         </div>
+       
     </div>
     
 

@@ -22,6 +22,13 @@ var SignUpFormComponent = (function () {
             password: ['', forms_1.Validators.required]
         });
     }
+    SignUpFormComponent.prototype.signup = function ($event) {
+        $event.preventDefault();
+        this.form.controls.username.setErrors({
+            invalidLogin: true
+        });
+        console.log(this.form.value);
+    };
     return SignUpFormComponent;
 }());
 SignUpFormComponent = __decorate([

@@ -30,5 +30,15 @@ export class SignUpFormComponent {
     }
 
 
+    signup($event) {
+        //$event.preventDefault();
+        this.form.controls.username.setErrors({
+            invalidLogin: true
+        });
+
+        console.log(this.form.value);
+    }
+
+
 
 }
