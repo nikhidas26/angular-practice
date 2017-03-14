@@ -1,0 +1,19 @@
+concept in reactive extensoins
+
+We use observables instead of promises when working with async operations to server calls.
+
+Observables are awesome for Asynchronous data streams
+——————————————————————————
+
+Asynchronous data streams
+—————————————
+
+DOM events
+
+Web sockets
+
+web workers: background tasks in js
+
+AJAX calls:
+
+We iterate regular collections one at a time, with observable collections we subscribe to them and use the call back function

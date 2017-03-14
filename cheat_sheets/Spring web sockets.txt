@@ -1,0 +1,321 @@
+JSR 356 = Web sockets
+
+JSR 356 + Sock Js + something else = Spring web sockets
+
+STOMP is the messaging protocol
+
+The browser opens a http connection with a server and the server comes back with 101 which switches the protocol and now establishes a TCP connection.
+
+STOMP is the messaging protocol which communicates between the client and the server through frames.
+
+The typical workflow will be like 
+
+A WEB SOCKET FRAME(which is basically a stomp message) is send to the WEBSOCKET END POINT, which then routes the message to CLIENT IN BOUND Channel and then this message is recieved by the MESSAGE HANDLER 
+which is the real processor of the message. The message is then sent to CLIENT OUT BOUND CHANNEL, which in turn sends it back to the WEB SOCKET END POINT.
+
+WEBSOCKET END POINT: 
+--------------------
+This bridges JSR 356 with spring web socket.
+It gets the message, decodes the message and finds the sub protocol handler, the default being STOMP. 
+It also publishes application events. 
+Sends the message to ClientInBoundChannel
+
+APPLICATION EVENTS ARE: 
+-----------------------
+SessionConnectEvent: when we request a connectin
+SessionConnecetedEvent- when successfully connected
+SessionDisconnectEvent
+SessionSubscribeEvent
+SessionUnsubscribeEvent
+
+We can listen to these events using the following code(here it is SessionConnectedEvent)
+
+public class NewConnectionListener implements ApplicationListener<SessionConnectedEvent> {
+    
+    public void onApplicationEvent(SessionConnectedEvent event) {
+    
+    }
+ 
+}
+
+Configuration for the end-point
+----------------------------------------
+Every time the client connects to "/ws" we are going to start a web socket session and all the messages are going to be processed by this. 
+
+Also we make sure we use SockJS option. 
+
+@Configuration
+public class WebSocketConfig extends WebSocketMessageBrokerConfigurationSupport {
+    public void registerStompEndpoints(StompEndPointRegistry registry) {
+        registry.addEndPoint("/ws");
+
+    }
+}
+
+XML configuration: 
+
+This will be inside <websocket:message-broker> tag
+		
+	<websocket:stomp-endpoint path="/user/stompversion">
+	<websocket:sockjs/>
+	</websocket:stomp-endpoint>
+
+After the end point we are going to send the message to ClientInbountChannel 
+
+ClientInboundChannel delegates to different subscribers. The subscribers are going to process the message based on the kind of destination that we send to
+-----------------------
+
+Destination can be application destinations, broker destinations, user destincations
+
+Application Destinations
+--------------------------------------
+
+SimpAnnotationMehodMessageHandler
+ - processes messages to application destinations
+
+SimpleBrokerMessageHandler
+ - built-in STOMP broker processing broker destinations
+
+StompBrokerRealyMessageHandler
+ - forwards messages to a full blown STOMP broker
+
+UserDestinationMessageHandler
+ - handles messages sent to users (with /user prefix)
+
+
+Application destination help you intercept the logic and treat the message itself. The broker is the only one responsible to understand what needs to be done to the STOMP message.
+
+TO SCALE WEB SOCKET APPLICATION listen to 20:00 to 22:00
+
+We need a broker that understands STOMP. Spring has a built-in broker, to scale this application, we need to have a full-blown STOMP broker like Rabbit MQ, where we have a seperate broker instead 
+of dealing with built-in spring broker.
+
+Destination Configuration
+------------------------------
+
+@Configuration
+public class WebSocketConfig extends WebSocketMessageBrokerConfigurationSupport {
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/queue/", "topic"); // We need this to processs stomp messages, anything that is sent to /queue, here simplebroker means embedded
+	registry.setApplicationDestinationPrefixes("/app"); // THis message will forward to your controller which are general MVC like controllers with special methods.
+
+    }
+}
+
+XML Configuration
+
+<websocket:message-broker application-destination-prefix="/cluwebrkr" >
+	<websocket:simple-broker prefix="/topic"/>
+</websocket:message-broker>
+
+
+Application Destination Messages: 
+-------------------------------------
+
+Messages sent to application destinations will be processed by SimpAnnotationMethodMessageHandler
+
+Delegates to message handler methods defined in @Controller or @RestController classes
+
+Subscription handling
+------------------------
+stompClient.subscribe("/app/chat.participants", callback);
+
+@SubscriberMapping("/chat.participants")
+public Collection<LogicEvent> retrieveParticipants() {
+	return blah;
+}
+
+Message Converters:
+------------------------
+
+StringMessageConverter
+
+ByteArrayMessageConverter
+
+MappingJackson2MessageConverter
+
+message will be converted to java object
+
+Handler Method Response:
+------------------------------
+
+SimpAnnotationMethodMessageHandler does not know about STOMP semantics
+
+Return values are setnt to the STOMP message broker via teh brokerChannel(doesnt apply to subscription mapping)
+
+
+@SendTo(/topic/filter) -> overrides the destination /topic/filter
+
+Handling Exceptions:
+------------------------------
+
+Use @MessageExceptionHandler, the response is sent to /topic/destination by default
+
+	@MessageExceptionHandler
+	@SendToUser("/queue/errors")
+	public String handleProfanity(TooMuchProfanityException e) {
+		return e.getMessage();
+	}
+
+Use @ControllerAdvice for global exception handlers
+
+BROKER DESTINATION OPTIONS
+----------------------------
+1) Spring broker: its in-built,difficult to scale as everything in memory, like messages, user sessions etc - SimpleBrokerMEssageHandler will be subscribed to inboundClientChannel and brokerChannel
+
+2) Full blown STOMP broker: Rabbit MQ, ACTIVE MQ, HornetQ, Open MQ
+
+STOMP BROKER RELAY
+
+e.g. Sample configuration would look like
+
+@Configuration
+public class WebSocketConfig extends WebSocketMessageBrokerConfigurationSupport {
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+			registry.enableStompBrokerRelay("/queue/", "topic")
+				.setRelayHost()
+				.setRelayPort
+				.setSystemLogin()
+				.setSystemPassword()
+				.;
+
+    }
+}
+
+ in this case StompBrokerRelayMessageHandler will be subscribedto inboundClientChannel and brokerBhannel, which forwards all the messages to the broker.
+ 
+ DESTINATIONS:  
+ ------------------
+ 
+ The STOMP protocol treats destinations as opaque string and thery syntax is server implementation specific. In messages we use . instead of /. You should be fine 
+ in most cases, except for RabitMQ then use . for destinations in general
+ 
+ STOMP Broker Connection failure
+ ----------------------------------
+ Hearbeat messages are constantly sent to the broker.
+ 
+ When the btoker goes down, a notification is published 
+      brokerAvailabilityEvent(available= false)
+	  
+ Reconnection happens transparently when service is available
+       brokerAvailabilityEvent(availabile= true)
+	   
+WHEN CLIENT DISCONNECTS
+--------------------------
+We on the client side need to take care of the reconnection. 
+
+We need to do this manually using SockJS
+
+DEALING WITH SLOW DELIVERIES: 58:00
+-------------------------------------
+
+clientOutBoundChannel load is more unpredictable than the one in clientInBoundChannel
+
+	sendTimeLimit: max amount of time allowed when sending(default: 10sec)
+	sendBufferSizeLimit: amount of data to buffer (0 to disable buffering)
+	
+	public void configureWebSocketTransport(WebSocketTransportRegistration registration) { 
+		registration.setSendTimeLimit(15*1000).setSendBufferSizeLimit(512*1024);
+	}
+ 
+ WebSocketMessageBrokerStats
+ ----------------------------- 1:00:01
+ Logs stats info every 30 inputs
+ 
+ We can expose it as HTTP end point as shown below
+ 
+ Tells you about thread pools, outbound thread pool executors, how many connections we have..
+ 
+ @Autowired
+ private WebSocketMessageBrokerStatus stats;
+ 
+ @RequestMapping(/stats)
+ public @ResponseBody WebSocketMessageBrokerStats showStats(){
+	return stats;
+ }
+ 
+SockJS Java Client  1:03:20
+------------------
+ 
+ Javascript client is not the only way to communicate with SockJs
+
+ Useful for server to server communication
+ 
+ Also useful to simulate high volume of connections
+
+Websocket Security 1:06:15
+-------------------------------
+
+A handshake is where we want to apply security. Once the connection is establishement is introduced in Spring Security. 
+
+Spring security annotations can be applied to both subscriptions and messages
+
+We can use @PreAuthorized and @PostAuthorized
+
+Flow 
+
+New STOMP Message -> ClientInboundChannel -> SecurityContextChannelInterceptor -> SecurityContext
+                                          -> ChannelSecurityInteceptor -> AccessDecisionManager -> MessageExpressionVoter
+										  
+e.g.
+
+public class WebSocketSecurityConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
+	
+	
+	@Override
+	protected void configure(MessageSecurityMetadataSourceRegistry messages) {
+		messages.destinationMatchers("/user/queue/errors").permitAll()
+				.destinationMatchers("/topic/admin/*").hasRole("ADMIN")
+				.anyMessage().hasRole("USER");
+		
+	}
+}
+
+XML Configuration
+
+<sec:intercept-url pattern="/user/**" access="isFullyAuthenticated() and hasAnyRole('ROLE_USER','ROLE_ADMIN','ROLE_ITSUPPORT') and !hasRole('ROLE_DENY')" />
+<sec:intercept-url pattern="/topic/**" access="permitAll" />
+
+Spring Session:(1:13:56)
+------------------
+ We need to the server all the time so that the web socket session is not closed.
+ 
+ To synchronize HTTP session with WebSocket session we use Spring Session. - this is still in its INITIAL stages
+ 
+Testing Web sockets(1:16:45)
+------------------------------
+Types of tests
+1) Controller tests (unit testing of the controllers
+2) Ot of container integration testing
+ Use TestContext framework to load the context and send messages to clientInBoundChannel
+ Setup infraStructure and pass message directly
+3) End to end testing / Load testing
+   - have an embedded websocket server
+   - use the SockJS java client
+   
+ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+

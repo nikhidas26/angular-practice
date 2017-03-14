@@ -1,0 +1,157 @@
+Webinar: Building WebSocket Browser Applications with Spring
+
+STOMP protocol
+------------------
+
+Simple messaging protocol for asynchronous messaging passing. Its supported by major message broker. 
+
+Suitable for use on the web
+
+Protocol is based on frames, which are modelled after http
+
+Client to server commands
+-------------------------
+
+SEND
+
+SUBSCRIBE
+
+UNSUBSCRIBE
+
+Server to client commands
+---------------------------
+
+MESSAGE
+
+ERROR
+
+RECEIPT
+
+ACK
+
+NACK
+
+The "Destination" header
+--------------------------
+
+A key concept in STOMP
+
+Opaque sting, it can be anything
+
+TYpically URI like path ("/queue/a", "/topic/a") 
+
+Message brokers define semantics.
+
+STOMP vs Raw Websocket
+----------------------
+
+Standardized message format
+
+Browser client support stomp.js, msgs.js
+
+Common messaging patterns
+
+Ability to incorporate a full-featured message broker.
+
+Spring 4.1 27:54
+----------------
+
+new module called spring-messaging
+
+Message-handling annotations
+
+Foundation for 	websocket messaging architecture
+
+Annotated Message Handling
+-----------------------------
+
+@Controller
+public class GreetingController {
+
+	// Receive client messaes to destination /greeting
+	// Process and send to subscribers of "/topic/greeting"
+	
+	@MessageMapping("/greeting")
+	@SendTo("/topic/greetings")
+	public String greet(String greeting) {
+		return "blah";
+	}
+}
+
+We can send messages from anywhere 
+-------------------------------------------
+
+@Controller
+public class GreetingController {
+
+	
+	@Autowired 
+	private SimpMessageTemplate template;
+	
+	@MessageMapping("/greeting")
+	@SendTo("/topic/greetings")
+	public String greet(String greeting) {
+		
+		this.template.convertAndSend("/topic/greeting", greeting);
+	}
+}
+
+Responding to a subscription
+---------------------------------
+
+@Controller
+public class GreetingController {
+
+	
+	@SubscribeEvent("/positions")
+	@SendTo("/topic/greetings")
+	public List<PortfolioPositions> getPositions(Principle user) {
+		
+		return portfolio.getPositions;
+	}
+}
+
+Plugging in an external message broker: 37:32
+------------------------------------------
+
+The reasons for this being, that simple broker supports only a subset of STOMP. Does not support acknowledging, receipts or transactions. Not fully scalable.
+
+Its not suitable for clustering.
+
+Authentication 42:40
+-----------------
+
+STOMP connect frame has authentication headers 
+
+Over websocket we can use HTTP, so we can use spring-security as usual. The HTTPServletRequest will contain the principal
+
+Report Error to User: 44:00
+----------------------
+
+Send Async results to User: 44:56
+----------------------------------
+
+@Service
+public class TradeService {
+
+	
+	@Autowired 
+	private SimpMessageTemplate template;
+	
+	public void executeTrade(Trade trade) {
+		String user = trade.getUser();
+		String dest = "/queue/position-updates";
+		TradeResult result = ...
+		
+		this.template.convertAndSend(user, dest, result);
+	}
+}
+
+How SendToUser works: 45:27
+----------------------------
+
+When you use @SendToUser("/queue/a")
+
+Resulting destination is "/user/{user}/queue/a"
+
+This is resolved to "queue/a/"

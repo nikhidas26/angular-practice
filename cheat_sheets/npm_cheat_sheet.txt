@@ -1,0 +1,25 @@
+1) Install npm behind a corporate proxy
+
+npm config set https-proxy http://<proxy-host>:<proxy-port>
+2) Update npm 
+
+npm install npm -g
+
+3) Check npm version
+
+npm -v
+
+Current version as of 09/16/2016 - 3.10.5
+
+4) npm location
+
+
+
+So we go into a folder that has package.json(like pom.xml) and run 'npm i' which created a node_modules folder and downloads all the dependencies into that folder
+
+- npm run <name-of-the-script>
+ e.g. npm run 
+Selenium is the testing engine, web-driver is on top of that that allows to talk to the web app
+
+Protracter webdriver and selenium allows us to do end to end testing
+
