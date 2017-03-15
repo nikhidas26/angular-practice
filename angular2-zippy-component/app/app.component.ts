@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'my-app',
   template: `<h1>My First Angular App</h1>
 
-            <zippy title="This is the title 1">
+            <zippy title="This is the Nikhil 1">
               Here is the content  for 1          
             </zippy>
 

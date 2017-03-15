@@ -7,17 +7,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var core_1 = require("@angular/core");
-var AppComponent = (function () {
-    function AppComponent() {
-        this.titles = ["This is title 1", "This is title 2"];
+var platform_browser_1 = require("@angular/platform-browser");
+var app_component_1 = require("./app.component");
+var forms_1 = require("@angular/forms");
+var AppModule = (function () {
+    function AppModule() {
     }
-    return AppComponent;
+    return AppModule;
 }());
-AppComponent = __decorate([
-    core_1.Component({
-        selector: 'my-app',
-        template: "<h1>My First Angular App</h1>\n\n            <zippy title=\"This is the Nikhil 1\">\n              Here is the content  for 1          \n            </zippy>\n\n            <zippy title=\"This is the title 2\">\n              Here is the content  for 2        \n            </zippy>\n            "
+AppModule = __decorate([
+    core_1.NgModule({
+        imports: [platform_browser_1.BrowserModule, forms_1.FormsModule, forms_1.ReactiveFormsModule],
+        declarations: [app_component_1.AppComponent],
+        bootstrap: [app_component_1.AppComponent]
     })
-], AppComponent);
-exports.AppComponent = AppComponent;
-//# sourceMappingURL=app.component.js.map
+], AppModule);
+exports.AppModule = AppModule;
+//# sourceMappingURL=app.module.js.map
